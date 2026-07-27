@@ -28,11 +28,6 @@ RUN chmod -R 777 storage bootstrap/cache
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Clear and cache configurations
-RUN php artisan config:clear
-RUN php artisan cache:clear
-RUN php artisan view:clear
-
 # Configure Apache DocumentRoot to point to Laravel's public directory
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
