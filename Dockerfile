@@ -22,11 +22,17 @@ WORKDIR /var/www/html
 # Copy existing application directory
 COPY . /var/www/html
 
-# Set correct permissions for Laravel storage and cache
-RUN chmod -R 777 storage bootstrap/cache
+# Set correct permissions and create storage folders if missing
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
+    && chmod -R 777 storage bootstrap/cache
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Clear and cache configurations during build
+RUN php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan view:clear
 
 # Configure Apache DocumentRoot to point to Laravel's public directory
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
