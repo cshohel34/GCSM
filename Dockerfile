@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
+# Enable Apache Rewrite Module
+RUN a2enmod rewrite
+
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -19,9 +22,20 @@ WORKDIR /var/www/html
 # Copy existing application directory
 COPY . /var/www/html
 
+# Set correct permissions for Laravel storage and cache
+RUN chmod -R 777 storage bootstrap/cache
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Expose port 80 and start Apache
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Clear and cache configurations
+RUN php artisan config:clear
+RUN php artisan cache:clear
+RUN php artisan view:clear
+
+# Configure Apache DocumentRoot to point to Laravel's public directory
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+
+# Expose port 80 and start Apache in foreground
 EXPOSE 80
+CMD ["apache2-foreground"]
